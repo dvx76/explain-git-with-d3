@@ -206,6 +206,37 @@ define(['d3'], function () {
             }
         },
 
+        switch: function (args) {
+            while (args.length > 0) {
+                var arg = args.shift(),
+                    name;
+
+                switch (arg) {
+                case '-c':
+                case '-C':
+                    name = args[args.length - 1];
+
+                    if (arg === '-C' && this.historyView.branches.indexOf(name) > -1) {
+                        // -C resets an existing branch to HEAD before switching to it
+                        this.historyView.moveTag(name, 'HEAD');
+                    } else {
+                        try {
+                            this.historyView.branch(name);
+                        } catch (err) {
+                            if (err.message.indexOf('already exists') === -1) {
+                                throw new Error(err.message);
+                            }
+                        }
+                    }
+                    break;
+                default:
+                    var remainingArgs = [arg].concat(args);
+                    args.length = 0;
+                    this.historyView.checkout(remainingArgs.join(' '));
+                }
+            }
+        },
+
         checkout: function (args) {
             while (args.length > 0) {
                 var arg = args.shift();

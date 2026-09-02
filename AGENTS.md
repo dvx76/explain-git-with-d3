@@ -1,7 +1,7 @@
 # AGENTS.md
 
 Static, client-only educational website that visualizes git branching concepts
-(commit, branch, checkout, merge, rebase, fetch/pull/push, reset, revert, tag)
+(commit, branch, switch, merge, rebase, fetch/pull/push, reset, revert, tag)
 with D3 commit graphs and an interactive fake terminal per playground. Fork of
 [onlywei/explain-git-with-d3](https://github.com/onlywei/explain-git-with-d3);
 2015-era upstream code, no CI.

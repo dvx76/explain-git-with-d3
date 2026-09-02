@@ -237,7 +237,7 @@ define(['d3'], function () {
         this.commitData = commitData;
 
         this.branches = [];
-        this.currentBranch = config.currentBranch || 'master';
+        this.currentBranch = config.currentBranch || 'main';
 
         this.width = config.width;
         this.height = config.height || 400;
