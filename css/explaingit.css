@@ -155,6 +155,12 @@ span.cmd {
     color: #FCC;
 }
 
+.control-box .log .commit-log {
+    padding: 5px;
+    color: #FFF;
+    white-space: pre-wrap;
+}
+
 .control-box input[type="text"] {
     width: 235px;
     border: none;

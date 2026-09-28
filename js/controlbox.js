@@ -77,14 +77,14 @@ define(['d3'], function () {
             });
 
             this.container = cBoxContainer;
-            this.log = log;
+            this.logEl = log;
             this.input = input;
 
             this.info(this.initialMessage);
         },
 
         destroy: function () {
-            this.log.remove();
+            this.logEl.remove();
             this.input.remove();
             this.container.remove();
 
@@ -96,8 +96,8 @@ define(['d3'], function () {
         },
 
         _scrollToBottom: function () {
-            var log = this.log.node();
-            log.scrollTop = log.scrollHeight;
+            var logEl = this.logEl.node();
+            logEl.scrollTop = logEl.scrollHeight;
         },
 
         command: function (entry) {
@@ -107,7 +107,7 @@ define(['d3'], function () {
 
             var split = entry.split(' ');
 
-            this.log.append('div')
+            this.logEl.append('div')
                 .classed('command-entry', true)
                 .html(entry);
 
@@ -133,13 +133,13 @@ define(['d3'], function () {
         },
 
         info: function (msg) {
-            this.log.append('div').classed('info', true).html(msg);
+            this.logEl.append('div').classed('info', true).html(msg);
             this._scrollToBottom();
         },
 
         error: function (msg) {
             msg = msg || 'I don\'t understand that.';
-            this.log.append('div').classed('error', true).html(msg);
+            this.logEl.append('div').classed('error', true).html(msg);
             this._scrollToBottom();
         },
 
@@ -284,6 +284,48 @@ define(['d3'], function () {
             }
         },
 
+        log: function (args) {
+            var view = this.historyView,
+                reachable = {},
+                entries = [],
+                walk, i, commit;
+
+            if (args.length > 1 || (args.length === 1 && args[0] !== '--oneline')) {
+                this.error('This demo only supports "git log --oneline".');
+                return;
+            }
+
+            if (args.length === 0) {
+                this.info('Assuming "--oneline".');
+            }
+
+            walk = function walk(commit) {
+                if (!commit || commit.id === 'initial' || reachable[commit.id]) {
+                    return;
+                }
+
+                reachable[commit.id] = true;
+                walk(view.getCommit(commit.parent));
+                walk(view.getCommit(commit.parent2));
+            };
+
+            walk(view.getCommit('HEAD'));
+
+            for (i = view.commitData.length - 1; i >= 0; i--) {
+                commit = view.commitData[i];
+
+                if (reachable[commit.id]) {
+                    entries.push(commit.id + ' ' + commit.message);
+                }
+            }
+
+            this.logEl.append('div')
+                .classed('commit-log', true)
+                .text(entries.join('\n'));
+
+            this._scrollToBottom();
+        },
+
         reset: function (args) {
             while (args.length > 0) {
                 var arg = args.shift();
@@ -400,6 +442,7 @@ define(['d3'], function () {
                 local.commitData.push({
                     id: fetchCommit.id,
                     parent: fetchCommit.parent,
+                    message: fetchCommit.message,
                     tags: []
                 });
             }
@@ -500,6 +543,7 @@ define(['d3'], function () {
                     commitToPush = {
                         id: localCommit.id,
                         parent: localCommit.parent,
+                        message: localCommit.message,
                         tags: []
                     };
 

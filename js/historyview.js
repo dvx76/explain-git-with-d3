@@ -10,7 +10,8 @@ define(['d3'], function () {
         cx, cy, fixCirclePosition,
         px1, py1, fixPointerStartPosition,
         px2, py2, fixPointerEndPosition,
-        fixIdPosition, tagY;
+        fixIdPosition, tagY,
+        placeholderMessages, placeholderMessage, mergeMessage;
 
     preventOverlap = function preventOverlap(commit, view) {
         var commitData = view.commitData,
@@ -60,6 +61,42 @@ define(['d3'], function () {
                 return d.branchless ? FADED_MARKER_END : MERGE_MARKER_END;
             });
         }
+    };
+
+    placeholderMessages = [
+        'Fix typo',
+        'Add tests',
+        'Update docs',
+        'Refactor code',
+        'Improve styles',
+        'Tweak layout',
+        'Clean up code',
+        'Add feature',
+        'Bump version',
+        'Fix bug',
+        'Handle edge case',
+        'Simplify logic',
+        'Update dependencies',
+        'Improve performance'
+    ];
+
+    placeholderMessage = function placeholderMessage(commit) {
+        var hash = 0,
+            i;
+
+        for (i = 0; i < commit.id.length; i++) {
+            hash = ((hash * 31) + commit.id.charCodeAt(i)) % 1000000007;
+        }
+
+        return placeholderMessages[hash % placeholderMessages.length];
+    };
+
+    mergeMessage = function mergeMessage(ref) {
+        if (ref.indexOf('/') > -1) {
+            return 'Merge remote-tracking branch \'' + ref + '\'';
+        }
+
+        return 'Merge branch \'' + ref + '\'';
     };
 
     cx = function (commit, view) {
@@ -231,6 +268,7 @@ define(['d3'], function () {
             commit = commitData[i];
             !commit.parent && (commit.parent = 'initial');
             !commit.tags && (commit.tags = []);
+            !commit.message && (commit.message = placeholderMessage(commit));
         }
 
         this.name = config.name || 'UnnamedHistoryView';
@@ -813,7 +851,7 @@ define(['d3'], function () {
             !commit.id && (commit.id = HistoryView.generateId());
             !commit.tags && (commit.tags = []);
 
-            commit.message = message;
+            commit.message = message || commit.message || placeholderMessage(commit);
             if (!commit.parent) {
                 if (!this.currentBranch) {
                     throw new Error('Not a good idea to make commits while in a detached HEAD state.');
@@ -935,7 +973,7 @@ define(['d3'], function () {
 
             if (this.isAncestor(commit, 'HEAD')) {
                 commit.reverted = true;
-                this.commit({reverts: commit.id});
+                this.commit({reverts: commit.id}, 'Revert "' + commit.message + '"');
             } else {
                 throw new Error(ref + 'is not an ancestor of HEAD.');
             }
@@ -972,12 +1010,13 @@ define(['d3'], function () {
                 
                 branchStartCommit.isNoFFBranch = true;
                 
-                this.commit({parent2: mergeTarget.id, isNoFFCommit: true});
+                this.commit({parent2: mergeTarget.id, isNoFFCommit: true},
+                            mergeMessage(ref));
             } else if (this.isAncestor(currentCommit, mergeTarget)) {
                 this.fastForward(mergeTarget);
                 return 'Fast-Forward';
             } else {
-                this.commit({parent2: mergeTarget.id});
+                this.commit({parent2: mergeTarget.id}, mergeMessage(ref));
             }
         },
 
